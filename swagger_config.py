@@ -1,0 +1,60 @@
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Audio Converter & Waveform Generator API",
+        default_version='v1',
+        description="""
+        A comprehensive audio processing API that provides:
+        
+        🎵 **Audio Format Conversion**: Convert various audio formats to WAV
+        📊 **Waveform Visualization**: Generate beautiful waveform images from audio files
+        ✅ **Format Support**: MP3, MP4, WAV, FLAC, AAC, OGG, WMA, M4A, AIFF
+        
+        ## Features
+        - High-quality audio conversion using librosa
+        - Professional waveform visualizations with matplotlib
+        - Automatic file downloads with proper naming
+        - Smart detection for files already in target format
+        - RESTful API design with comprehensive documentation
+        
+        ## Usage
+        1. **Convert Audio**: Upload any supported audio file to `/convert/` to get WAV output
+        2. **Generate Waveform**: Upload audio to `/waveform/` to get PNG visualization
+        3. **Check Formats**: Use `/formats/` to see all supported audio formats
+        4. **Health Check**: Use `/health/` to verify API status
+        
+        ## Endpoints Overview
+        
+        ### Audio Conversion
+        - `POST /convert/` - Convert audio files to WAV format
+        
+        ### Audio Visualization  
+        - `POST /waveform/` - Generate waveform visualizations
+        
+        ### Information
+        - `GET /formats/` - List supported audio formats
+        - `GET /health/` - API health check
+        
+        ### Documentation
+        - `GET /docs/` - Interactive API documentation (Swagger UI)
+        - `GET /redoc/` - Alternative documentation (ReDoc)
+        """,
+        terms_of_service="https://www.example.com/terms/",
+        contact=openapi.Contact(
+            name="Audio API Support",
+            email="support@audioapi.local",
+            url="https://www.example.com/contact/"
+        ),
+        license=openapi.License(
+            name="MIT License",
+            url="https://opensource.org/licenses/MIT"
+        ),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
