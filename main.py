@@ -20,9 +20,26 @@ if not settings.configured:
         INSTALLED_APPS=[
             'django.contrib.contenttypes',
             'django.contrib.auth',
+            'django.contrib.staticfiles',
             'rest_framework',
             'drf_yasg',
         ],
+        TEMPLATES=[
+            {
+                'BACKEND': 'django.template.backends.django.DjangoTemplates',
+                'DIRS': [],
+                'APP_DIRS': True,
+                'OPTIONS': {
+                    'context_processors': [
+                        'django.template.context_processors.debug',
+                        'django.template.context_processors.request',
+                        'django.contrib.auth.context_processors.auth',
+                        'django.contrib.messages.context_processors.messages',
+                    ],
+                },
+            },
+        ],
+        STATIC_URL='/static/',
         MIDDLEWARE=[
             'django.middleware.common.CommonMiddleware',
         ],
@@ -37,6 +54,8 @@ if not settings.configured:
 
 
 from rest_framework import permissions
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -58,42 +77,42 @@ schema_view = get_schema_view(
 @swagger_auto_schema(
     method='post',
     operation_description="Convert audio file to WAV format",
-    manual_parameters=[
-        openapi.Parameter(
-            'audio_file',
-            openapi.IN_FORM,
-            description="Audio file to convert (supports mp3, mp4, flac, aac, ogg, wma, m4a, aiff)",
-            type=openapi.TYPE_FILE,
-            required=True
-        )
-    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'audio_file': openapi.Schema(
+                type=openapi.TYPE_FILE,
+                description="Audio file to convert (supports mp3, mp4, flac, aac, ogg, wma, m4a, aiff)"
+            )
+        },
+        required=['audio_file']
+    ),
     responses={
         200: openapi.Response(
-            description="WAV file download",
-            schema=openapi.Schema(type=openapi.TYPE_FILE)
+            description="WAV file download or message if already WAV"
         ),
         400: openapi.Response(
             description="Bad request",
-            examples={
-                "application/json": {
-                    "error": "No audio file provided"
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(type=openapi.TYPE_STRING)
                 }
-            }
+            )
         ),
         500: openapi.Response(
             description="Conversion failed",
-            examples={
-                "application/json": {
-                    "error": "Conversion failed"
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(type=openapi.TYPE_STRING)
                 }
-            }
+            )
         )
     },
-    consumes=['multipart/form-data'],
-    produces=['audio/wav', 'application/json']
+    consumes=['multipart/form-data']
 )
-@csrf_exempt
-@require_http_methods(["POST"])
+@api_view(['POST'])
 def convert_audio(request):
     try:
         if 'audio_file' not in request.FILES:
@@ -138,7 +157,7 @@ def convert_audio(request):
         )
     }
 )
-@require_http_methods(["GET"])
+@api_view(['GET'])
 def supported_formats(request):
     formats = AudioConverter.get_supported_formats()
     return JsonResponse({'supported_formats': formats})
@@ -158,7 +177,7 @@ def supported_formats(request):
         )
     }
 )
-@require_http_methods(["GET"])
+@api_view(['GET'])
 def health_check(request):
     return JsonResponse({'status': 'healthy'})
 
