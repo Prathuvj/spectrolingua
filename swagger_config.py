@@ -14,6 +14,7 @@ schema_view = get_schema_view(
         🎵 **Audio Format Conversion**: Convert various audio formats to WAV
         📊 **Waveform Visualization**: Generate beautiful waveform images from audio files
         🔬 **Spectrogram Analysis**: Create STFT spectrograms with log-frequency scale
+        🎤 **Speech Transcription**: Convert speech to text using Google Speech Recognition
         ✅ **Format Support**: MP3, MP4, WAV, FLAC, AAC, OGG, WMA, M4A, AIFF
         
         ## Features
@@ -27,8 +28,10 @@ schema_view = get_schema_view(
         1. **Convert Audio**: Upload any supported audio file to `/convert/` to get WAV output
         2. **Generate Waveform**: Upload audio to `/waveform/` to get PNG visualization
         3. **Generate Spectrogram**: Upload audio to `/spectrogram/` to get STFT analysis
-        4. **Check Formats**: Use `/formats/` to see all supported audio formats
-        5. **Health Check**: Use `/health/` to verify API status
+        4. **Transcribe Speech**: Upload audio to `/transcribe/` to get text transcription
+        5. **Check Formats**: Use `/formats/` to see all supported audio formats
+        6. **Check Languages**: Use `/languages/` to see supported transcription languages
+        7. **Health Check**: Use `/health/` to verify API status
         
         ## Endpoints Overview
         
@@ -39,8 +42,12 @@ schema_view = get_schema_view(
         - `POST /waveform/` - Generate waveform visualizations
         - `POST /spectrogram/` - Generate STFT spectrogram analysis
         
+        ### Audio Processing
+        - `POST /transcribe/` - Transcribe speech to text using Google Speech Recognition
+        
         ### Information
         - `GET /formats/` - List supported audio formats
+        - `GET /languages/` - List supported transcription languages
         - `GET /health/` - API health check
         
         ### Documentation

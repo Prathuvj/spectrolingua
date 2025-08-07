@@ -48,7 +48,7 @@ if not settings.configured:
 
 
 from swagger_config import schema_view
-from api_endpoints import convert_audio, supported_formats, health_check, generate_waveform, generate_spectrogram
+from api_endpoints import convert_audio, supported_formats, health_check, generate_waveform, generate_spectrogram, transcribe_audio, supported_languages
 
 
 
@@ -58,6 +58,8 @@ urlpatterns = [
     path('health/', health_check, name='health_check'),
     path('waveform/', generate_waveform, name='generate_waveform'),
     path('spectrogram/', generate_spectrogram, name='generate_spectrogram'),
+    path('transcribe/', transcribe_audio, name='transcribe_audio'),
+    path('languages/', supported_languages, name='supported_languages'),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^docs/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),

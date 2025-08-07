@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view
 from format_conversion import AudioConverter
 from waveform import WaveformGenerator
 from spectrogram import SpectrogramGenerator
+from transcribe import AudioTranscriber
 from swagger_config import *
 
 
@@ -380,3 +381,204 @@ def generate_spectrogram(request):
         
     except Exception as e:
         return JsonResponse({'error': 'Spectrogram generation failed'}, status=500)
+
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Transcribe Audio to Text",
+    operation_description="""
+    Convert speech in audio files to text using Google Speech Recognition API.
+    
+    **Features:**
+    - High-accuracy speech recognition using Google's API
+    - Support for 35+ languages and dialects
+    - Automatic audio format conversion to WAV for processing
+    - Real-time transcription with error handling
+    - Language detection and customization options
+    
+    **Supported Input Formats:**
+    - All formats: MP3, MP4, WAV, FLAC, AAC, OGG, WMA, M4A, AIFF
+    
+    **Language Support:**
+    - English (US/UK), Spanish, French, German, Italian
+    - Portuguese, Russian, Japanese, Korean, Chinese
+    - Arabic, Hindi, Thai, Vietnamese, Dutch, Swedish
+    - And many more (35+ languages total)
+    
+    **Technical Details:**
+    - Uses Google Speech Recognition API
+    - Automatic audio preprocessing and format conversion
+    - Handles various audio qualities and lengths
+    - Error handling for unclear speech or API issues
+    
+    **Use Cases:**
+    - Voice note transcription
+    - Meeting and interview transcription
+    - Accessibility applications
+    - Content creation and documentation
+    - Language learning and analysis
+    - Automated subtitling and captioning
+    """,
+    manual_parameters=[
+        openapi.Parameter(
+            'audio_file',
+            openapi.IN_FORM,
+            description="Audio file containing speech to transcribe. Accepts all supported formats: mp3, mp4, wav, flac, aac, ogg, wma, m4a, aiff",
+            type=openapi.TYPE_FILE,
+            required=True
+        ),
+        openapi.Parameter(
+            'language',
+            openapi.IN_FORM,
+            description="Language code for speech recognition (e.g., 'en-US', 'es-ES', 'fr-FR'). Defaults to 'en-US'",
+            type=openapi.TYPE_STRING,
+            required=False
+        )
+    ],
+    responses={
+        200: openapi.Response(
+            description="Success - Transcribed text returned",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'transcription': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example="Hello, this is a sample transcription of the audio file."
+                    ),
+                    'language': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example="en-US"
+                    ),
+                    'filename': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example="audio_sample.mp3"
+                    )
+                }
+            ),
+            examples={
+                "application/json": {
+                    "transcription": "Hello, this is a sample transcription of the audio file.",
+                    "language": "en-US",
+                    "filename": "audio_sample.mp3"
+                }
+            }
+        ),
+        400: openapi.Response(
+            description="Bad Request - Missing file or transcription error",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example="Could not understand audio - speech may be unclear or not present"
+                    )
+                }
+            )
+        ),
+        500: openapi.Response(
+            description="Internal Server Error - Transcription service failed",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example="Transcription failed"
+                    )
+                }
+            )
+        )
+    },
+    consumes=['multipart/form-data'],
+    tags=['Audio Processing']
+)
+@api_view(['POST'])
+def transcribe_audio(request):
+    try:
+        if 'audio_file' not in request.FILES:
+            return JsonResponse({'error': 'No audio file provided'}, status=400)
+        
+        audio_file = request.FILES['audio_file']
+        
+        if not audio_file.name:
+            return JsonResponse({'error': 'Invalid file'}, status=400)
+        
+        language = request.POST.get('language', 'en-US')
+        
+        transcription = AudioTranscriber.transcribe_audio_from_file(audio_file, audio_file.name, language)
+        
+        return JsonResponse({
+            'transcription': transcription,
+            'language': language,
+            'filename': audio_file.name
+        })
+        
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': 'Transcription failed'}, status=500)
+
+
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Get Supported Languages for Transcription",
+    operation_description="""
+    Retrieve a comprehensive list of all languages supported by the speech recognition API.
+    
+    **Use this endpoint to:**
+    - Check language support before transcription
+    - Display available languages in your application
+    - Validate language codes programmatically
+    - Build language selection interfaces
+    
+    **Returns:** Dictionary mapping language codes to human-readable names
+    
+    **Language Coverage:**
+    - Major world languages (English, Spanish, French, German, etc.)
+    - Asian languages (Chinese, Japanese, Korean, Hindi, etc.)
+    - European languages (Italian, Portuguese, Russian, etc.)
+    - Regional dialects and variants
+    """,
+    responses={
+        200: openapi.Response(
+            description="Successfully retrieved supported languages",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'supported_languages': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        example={
+                            "en-US": "English (US)",
+                            "en-GB": "English (UK)",
+                            "es-ES": "Spanish (Spain)",
+                            "fr-FR": "French (France)",
+                            "de-DE": "German (Germany)"
+                        }
+                    )
+                }
+            ),
+            examples={
+                "application/json": {
+                    "supported_languages": {
+                        "en-US": "English (US)",
+                        "en-GB": "English (UK)",
+                        "es-ES": "Spanish (Spain)",
+                        "es-MX": "Spanish (Mexico)",
+                        "fr-FR": "French (France)",
+                        "de-DE": "German (Germany)",
+                        "it-IT": "Italian (Italy)",
+                        "pt-BR": "Portuguese (Brazil)",
+                        "ru-RU": "Russian (Russia)",
+                        "ja-JP": "Japanese (Japan)",
+                        "ko-KR": "Korean (South Korea)",
+                        "zh-CN": "Chinese (Simplified)"
+                    }
+                }
+            }
+        )
+    },
+    tags=['Information']
+)
+@api_view(['GET'])
+def supported_languages(request):
+    languages = AudioTranscriber.get_supported_languages()
+    return JsonResponse({'supported_languages': languages})
