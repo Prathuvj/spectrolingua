@@ -44,8 +44,11 @@ def convert_audio(request):
         
         wav_data = AudioConverter.convert_to_wav(audio_file, audio_file.name)
         
+        filename = audio_file.name.rsplit(".", 1)[0] + ".wav"
         response = HttpResponse(wav_data, content_type='audio/wav')
-        response['Content-Disposition'] = f'attachment; filename="{audio_file.name.rsplit(".", 1)[0]}.wav"'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = len(wav_data)
+        response['Cache-Control'] = 'no-cache'
         return response
         
     except ValueError as e:
