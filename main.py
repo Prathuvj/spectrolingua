@@ -9,6 +9,7 @@ from django.urls import path, re_path
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import json
 from format_conversion import AudioConverter
+from waveform import WaveformGenerator
 
 
 if not settings.configured:
@@ -182,10 +183,73 @@ def health_check(request):
     return JsonResponse({'status': 'healthy'})
 
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Generate waveform visualization from audio file",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'audio_file': openapi.Schema(
+                type=openapi.TYPE_FILE,
+                description="Audio file to generate waveform from (supports all audio formats)"
+            )
+        },
+        required=['audio_file']
+    ),
+    responses={
+        200: openapi.Response(
+            description="PNG waveform image download"
+        ),
+        400: openapi.Response(
+            description="Bad request",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(type=openapi.TYPE_STRING)
+                }
+            )
+        ),
+        500: openapi.Response(
+            description="Waveform generation failed",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(type=openapi.TYPE_STRING)
+                }
+            )
+        )
+    },
+    consumes=['multipart/form-data']
+)
+@api_view(['POST'])
+def generate_waveform(request):
+    try:
+        if 'audio_file' not in request.FILES:
+            return JsonResponse({'error': 'No audio file provided'}, status=400)
+        
+        audio_file = request.FILES['audio_file']
+        
+        if not audio_file.name:
+            return JsonResponse({'error': 'Invalid file'}, status=400)
+        
+        waveform_data = WaveformGenerator.generate_waveform_from_file(audio_file, audio_file.name)
+        
+        filename = audio_file.name.rsplit(".", 1)[0] + "_waveform.png"
+        response = HttpResponse(waveform_data, content_type='image/png')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = len(waveform_data)
+        response['Cache-Control'] = 'no-cache'
+        return response
+        
+    except Exception as e:
+        return JsonResponse({'error': 'Waveform generation failed'}, status=500)
+
+
 urlpatterns = [
     path('convert/', convert_audio, name='convert_audio'),
     path('formats/', supported_formats, name='supported_formats'),
     path('health/', health_check, name='health_check'),
+    path('waveform/', generate_waveform, name='generate_waveform'),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
