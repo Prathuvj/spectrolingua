@@ -421,22 +421,21 @@ def generate_spectrogram(request):
     - Language learning and analysis
     - Automated subtitling and captioning
     """,
-    manual_parameters=[
-        openapi.Parameter(
-            'audio_file',
-            openapi.IN_FORM,
-            description="Audio file containing speech to transcribe. Supports all audio formats: mp3, mp4, wav, flac, aac, ogg, wma, m4a, aiff. Non-WAV files are automatically converted.",
-            type=openapi.TYPE_FILE,
-            required=True
-        ),
-        openapi.Parameter(
-            'language',
-            openapi.IN_FORM,
-            description="Language code for speech recognition (e.g., 'en-US', 'es-ES', 'fr-FR'). Defaults to 'en-US'",
-            type=openapi.TYPE_STRING,
-            required=False
-        )
-    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'audio_file': openapi.Schema(
+                type=openapi.TYPE_FILE,
+                description="Audio file containing speech to transcribe. Supports all audio formats: mp3, mp4, wav, flac, aac, ogg, wma, m4a, aiff. Non-WAV files are automatically converted."
+            ),
+            'language': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description="Language code for speech recognition (e.g., 'en-US', 'es-ES', 'fr-FR'). Defaults to 'en-US'",
+                default='en-US'
+            )
+        },
+        required=['audio_file']
+    ),
     responses={
         200: openapi.Response(
             description="Success - Transcribed text returned",

@@ -51,7 +51,6 @@ from swagger_config import schema_view
 from api_endpoints import convert_audio, supported_formats, health_check, generate_waveform, generate_spectrogram, transcribe_audio, supported_languages
 
 
-
 urlpatterns = [
     path('convert/', convert_audio, name='convert_audio'),
     path('formats/', supported_formats, name='supported_formats'),
@@ -72,19 +71,17 @@ if __name__ == '__main__':
     import sys
     import subprocess
     import time
-    import os
-    import signal
     from django.core.management import execute_from_command_line
     
     # Check if we're being called to run Django directly
     if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
         execute_from_command_line(sys.argv)
     else:
-        print("🎵 Audio Processing Studio - Starting Backend & Frontend")
+        print("Audio Processing Studio - Starting Backend & Frontend")
         print("=" * 60)
         
         # Start Django API server
-        print("🚀 Starting Django API server on http://127.0.0.1:8000")
+        print("Starting Django API server on http://127.0.0.1:8000")
         django_process = subprocess.Popen([
             sys.executable, 'main.py', 'runserver', '8000'
         ])
@@ -93,7 +90,7 @@ if __name__ == '__main__':
         time.sleep(3)
         
         # Start Streamlit frontend
-        print("🎨 Starting Streamlit frontend on http://localhost:8501")
+        print("Starting Streamlit frontend on http://localhost:8501")
         streamlit_process = subprocess.Popen([
             sys.executable, '-m', 'streamlit', 'run', 'streamlit_app.py',
             '--server.port', '8501',
@@ -101,17 +98,17 @@ if __name__ == '__main__':
             '--browser.gatherUsageStats', 'false'
         ])
         
-        print("\n✅ Both services are starting...")
-        print("📱 Frontend: http://localhost:8501")
-        print("� API Docsn: http://127.0.0.1:8000/docs/")
-        print("\n💡 Press Ctrl+C to stop both services")
+        print("\nBoth services are starting...")
+        print("Frontend: http://localhost:8501")
+        print("API Docs: http://127.0.0.1:8000/docs/")
+        print("\nPress Ctrl+C to stop both services")
         
         try:
             # Wait for both processes
             django_process.wait()
             streamlit_process.wait()
         except KeyboardInterrupt:
-            print("\n👋 Shutting down Audio Processing Studio...")
+            print("\nShutting down Audio Processing Studio...")
             
             # Terminate both processes
             django_process.terminate()
@@ -125,5 +122,5 @@ if __name__ == '__main__':
                 django_process.kill()
                 streamlit_process.kill()
             
-            print("✅ Services stopped successfully")
+            print("Services stopped successfully")
             sys.exit(0)

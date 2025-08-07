@@ -210,7 +210,7 @@ def main():
                         
                         # Display waveform image
                         image = Image.open(io.BytesIO(waveform_data))
-                        st.image(image, caption="Audio Waveform Visualization", use_column_width=True)
+                        st.image(image, caption="Audio Waveform Visualization", use_container_width=True)
                         
                         # Download button
                         st.download_button(
@@ -230,7 +230,7 @@ def main():
                         
                         # Display spectrogram image
                         image = Image.open(io.BytesIO(spectrogram_data))
-                        st.image(image, caption="STFT Spectrogram (Log-Frequency Scale)", use_column_width=True)
+                        st.image(image, caption="STFT Spectrogram (Log-Frequency Scale)", use_container_width=True)
                         
                         # Download button
                         st.download_button(
