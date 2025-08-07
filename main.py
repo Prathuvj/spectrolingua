@@ -71,37 +71,59 @@ application = get_wsgi_application()
 if __name__ == '__main__':
     import sys
     import subprocess
-    import threading
     import time
+    import os
+    import signal
     from django.core.management import execute_from_command_line
     
-    def start_django():
-        """Start Django development server"""
-        print("🚀 Starting Django API server on http://127.0.0.1:8000")
-        sys.argv = ['main.py', 'runserver', '8000']
+    # Check if we're being called to run Django directly
+    if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
         execute_from_command_line(sys.argv)
-    
-    def start_streamlit():
-        """Start Streamlit frontend"""
-        time.sleep(3)  # Wait for Django to start
+    else:
+        print("🎵 Audio Processing Studio - Starting Backend & Frontend")
+        print("=" * 60)
+        
+        # Start Django API server
+        print("🚀 Starting Django API server on http://127.0.0.1:8000")
+        django_process = subprocess.Popen([
+            sys.executable, 'main.py', 'runserver', '8000'
+        ])
+        
+        # Wait a moment for Django to start
+        time.sleep(3)
+        
+        # Start Streamlit frontend
         print("🎨 Starting Streamlit frontend on http://localhost:8501")
-        subprocess.run([
+        streamlit_process = subprocess.Popen([
             sys.executable, '-m', 'streamlit', 'run', 'streamlit_app.py',
             '--server.port', '8501',
             '--server.headless', 'false',
             '--browser.gatherUsageStats', 'false'
         ])
-    
-    print("🎵 Audio Processing Studio - Starting Backend & Frontend")
-    print("=" * 60)
-    
-    # Start Django in a separate thread
-    django_thread = threading.Thread(target=start_django, daemon=True)
-    django_thread.start()
-    
-    # Start Streamlit in main thread
-    try:
-        start_streamlit()
-    except KeyboardInterrupt:
-        print("\n👋 Shutting down Audio Processing Studio")
-        sys.exit(0)
+        
+        print("\n✅ Both services are starting...")
+        print("📱 Frontend: http://localhost:8501")
+        print("� API Docsn: http://127.0.0.1:8000/docs/")
+        print("\n💡 Press Ctrl+C to stop both services")
+        
+        try:
+            # Wait for both processes
+            django_process.wait()
+            streamlit_process.wait()
+        except KeyboardInterrupt:
+            print("\n👋 Shutting down Audio Processing Studio...")
+            
+            # Terminate both processes
+            django_process.terminate()
+            streamlit_process.terminate()
+            
+            # Wait for clean shutdown
+            try:
+                django_process.wait(timeout=5)
+                streamlit_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                django_process.kill()
+                streamlit_process.kill()
+            
+            print("✅ Services stopped successfully")
+            sys.exit(0)
