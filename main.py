@@ -37,6 +37,11 @@ def convert_audio(request):
         if not audio_file.name:
             return JsonResponse({'error': 'Invalid file'}, status=400)
         
+        file_extension = audio_file.name.split('.')[-1].lower()
+        
+        if file_extension == 'wav':
+            return JsonResponse({'message': 'The file is already in .wav format'})
+        
         wav_data = AudioConverter.convert_to_wav(audio_file, audio_file.name)
         
         response = HttpResponse(wav_data, content_type='audio/wav')
