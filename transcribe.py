@@ -3,6 +3,7 @@ import tempfile
 import os
 from typing import BinaryIO
 import io
+from format_conversion import AudioConverter
 
 
 class AudioTranscriber:
@@ -11,18 +12,31 @@ class AudioTranscriber:
     def transcribe_audio_from_file(audio_file: BinaryIO, original_filename: str, language: str = 'en-US') -> str:
         file_extension = original_filename.split('.')[-1].lower()
         
-        # Only support WAV files for now to avoid ffmpeg dependency issues
+        # If not WAV, convert it first using our existing AudioConverter
         if file_extension != 'wav':
-            raise ValueError(f"Currently only WAV files are supported for transcription. Please convert your {file_extension} file to WAV format using the /convert/ endpoint first.")
-        
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_input:
-            temp_input.write(audio_file.read())
-            temp_input_path = temp_input.name
+            try:
+                # Reset file pointer to beginning
+                audio_file.seek(0)
+                # Convert to WAV using our existing converter
+                wav_data = AudioConverter.convert_to_wav(audio_file, original_filename)
+                
+                # Create temporary WAV file from converted data
+                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_wav:
+                    temp_wav.write(wav_data)
+                    temp_wav_path = temp_wav.name
+                
+            except Exception as e:
+                raise ValueError(f"Failed to convert {file_extension} to WAV for transcription: {str(e)}")
+        else:
+            # For WAV files, write directly to temp file
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_wav:
+                temp_wav.write(audio_file.read())
+                temp_wav_path = temp_wav.name
         
         try:
             recognizer = sr.Recognizer()
             
-            with sr.AudioFile(temp_input_path) as source:
+            with sr.AudioFile(temp_wav_path) as source:
                 audio_data = recognizer.record(source)
             
             try:
@@ -34,8 +48,8 @@ class AudioTranscriber:
                 raise ValueError(f"Could not request results from Google Speech Recognition service: {e}")
             
         finally:
-            if os.path.exists(temp_input_path):
-                os.unlink(temp_input_path)
+            if os.path.exists(temp_wav_path):
+                os.unlink(temp_wav_path)
     
     @staticmethod
     def get_supported_languages():

@@ -397,8 +397,8 @@ def generate_spectrogram(request):
     - Language detection and customization options
     
     **Supported Input Formats:**
-    - Currently: WAV files only
-    - For other formats: Use /convert/ endpoint first to convert to WAV
+    - All formats: MP3, MP4, WAV, FLAC, AAC, OGG, WMA, M4A, AIFF
+    - Automatic conversion: Non-WAV files are automatically converted to WAV before transcription
     
     **Language Support:**
     - English (US/UK), Spanish, French, German, Italian
@@ -408,7 +408,8 @@ def generate_spectrogram(request):
     
     **Technical Details:**
     - Uses Google Speech Recognition API
-    - Automatic audio preprocessing and format conversion
+    - Automatic format conversion to WAV using librosa (no ffmpeg required)
+    - Seamless processing of all supported audio formats
     - Handles various audio qualities and lengths
     - Error handling for unclear speech or API issues
     
@@ -424,7 +425,7 @@ def generate_spectrogram(request):
         openapi.Parameter(
             'audio_file',
             openapi.IN_FORM,
-            description="Audio file containing speech to transcribe. Currently supports WAV files only. Use /convert/ endpoint to convert other formats to WAV first.",
+            description="Audio file containing speech to transcribe. Supports all audio formats: mp3, mp4, wav, flac, aac, ogg, wma, m4a, aiff. Non-WAV files are automatically converted.",
             type=openapi.TYPE_FILE,
             required=True
         ),
