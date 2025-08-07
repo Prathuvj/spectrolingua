@@ -6,3 +6,4 @@ drf-yasg==1.21.7
 matplotlib==3.7.2
 SpeechRecognition==3.10.0
 pydub==0.25.1
+setuptools==69.0.3
