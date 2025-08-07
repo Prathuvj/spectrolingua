@@ -69,11 +69,39 @@ application = get_wsgi_application()
 
 
 if __name__ == '__main__':
-    from django.core.management import execute_from_command_line
     import sys
+    import subprocess
+    import threading
+    import time
+    from django.core.management import execute_from_command_line
     
-    if len(sys.argv) == 1:
-        sys.argv.append('runserver')
-        sys.argv.append('8000')
+    def start_django():
+        """Start Django development server"""
+        print("🚀 Starting Django API server on http://127.0.0.1:8000")
+        sys.argv = ['main.py', 'runserver', '8000']
+        execute_from_command_line(sys.argv)
     
-    execute_from_command_line(sys.argv)
+    def start_streamlit():
+        """Start Streamlit frontend"""
+        time.sleep(3)  # Wait for Django to start
+        print("🎨 Starting Streamlit frontend on http://localhost:8501")
+        subprocess.run([
+            sys.executable, '-m', 'streamlit', 'run', 'streamlit_app.py',
+            '--server.port', '8501',
+            '--server.headless', 'false',
+            '--browser.gatherUsageStats', 'false'
+        ])
+    
+    print("🎵 Audio Processing Studio - Starting Backend & Frontend")
+    print("=" * 60)
+    
+    # Start Django in a separate thread
+    django_thread = threading.Thread(target=start_django, daemon=True)
+    django_thread.start()
+    
+    # Start Streamlit in main thread
+    try:
+        start_streamlit()
+    except KeyboardInterrupt:
+        print("\n👋 Shutting down Audio Processing Studio")
+        sys.exit(0)
