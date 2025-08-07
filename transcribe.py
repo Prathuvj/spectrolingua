@@ -2,7 +2,6 @@ import speech_recognition as sr
 import tempfile
 import os
 from typing import BinaryIO
-from pydub import AudioSegment
 import io
 
 
@@ -12,19 +11,15 @@ class AudioTranscriber:
     def transcribe_audio_from_file(audio_file: BinaryIO, original_filename: str, language: str = 'en-US') -> str:
         file_extension = original_filename.split('.')[-1].lower()
         
-        with tempfile.NamedTemporaryFile(suffix=f'.{file_extension}', delete=False) as temp_input:
+        # Only support WAV files for now to avoid ffmpeg dependency issues
+        if file_extension != 'wav':
+            raise ValueError(f"Currently only WAV files are supported for transcription. Please convert your {file_extension} file to WAV format using the /convert/ endpoint first.")
+        
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_input:
             temp_input.write(audio_file.read())
             temp_input_path = temp_input.name
         
         try:
-            if file_extension != 'wav':
-                audio = AudioSegment.from_file(temp_input_path, format=file_extension)
-                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_wav:
-                    temp_wav_path = temp_wav.name
-                audio.export(temp_wav_path, format='wav')
-                os.unlink(temp_input_path)
-                temp_input_path = temp_wav_path
-            
             recognizer = sr.Recognizer()
             
             with sr.AudioFile(temp_input_path) as source:

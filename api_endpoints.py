@@ -397,7 +397,8 @@ def generate_spectrogram(request):
     - Language detection and customization options
     
     **Supported Input Formats:**
-    - All formats: MP3, MP4, WAV, FLAC, AAC, OGG, WMA, M4A, AIFF
+    - Currently: WAV files only
+    - For other formats: Use /convert/ endpoint first to convert to WAV
     
     **Language Support:**
     - English (US/UK), Spanish, French, German, Italian
@@ -423,7 +424,7 @@ def generate_spectrogram(request):
         openapi.Parameter(
             'audio_file',
             openapi.IN_FORM,
-            description="Audio file containing speech to transcribe. Accepts all supported formats: mp3, mp4, wav, flac, aac, ogg, wma, m4a, aiff",
+            description="Audio file containing speech to transcribe. Currently supports WAV files only. Use /convert/ endpoint to convert other formats to WAV first.",
             type=openapi.TYPE_FILE,
             required=True
         ),
@@ -515,7 +516,10 @@ def transcribe_audio(request):
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'error': 'Transcription failed'}, status=500)
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Transcription error: {error_details}")
+        return JsonResponse({'error': f'Transcription failed: {str(e)}'}, status=500)
 
 
 @swagger_auto_schema(
