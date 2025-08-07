@@ -1,6 +1,7 @@
-from pydub import AudioSegment
-import os
+import librosa
+import soundfile as sf
 import tempfile
+import os
 from typing import BinaryIO
 
 
@@ -19,12 +20,12 @@ class AudioConverter:
             temp_input_path = temp_input.name
         
         try:
-            audio = AudioSegment.from_file(temp_input_path, format=file_extension)
+            audio_data, sample_rate = librosa.load(temp_input_path, sr=None)
             
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_output:
                 temp_output_path = temp_output.name
             
-            audio.export(temp_output_path, format='wav')
+            sf.write(temp_output_path, audio_data, sample_rate, format='WAV')
             
             with open(temp_output_path, 'rb') as wav_file:
                 wav_data = wav_file.read()
