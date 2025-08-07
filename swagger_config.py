@@ -13,6 +13,7 @@ schema_view = get_schema_view(
         
         🎵 **Audio Format Conversion**: Convert various audio formats to WAV
         📊 **Waveform Visualization**: Generate beautiful waveform images from audio files
+        🔬 **Spectrogram Analysis**: Create STFT spectrograms with log-frequency scale
         ✅ **Format Support**: MP3, MP4, WAV, FLAC, AAC, OGG, WMA, M4A, AIFF
         
         ## Features
@@ -25,8 +26,9 @@ schema_view = get_schema_view(
         ## Usage
         1. **Convert Audio**: Upload any supported audio file to `/convert/` to get WAV output
         2. **Generate Waveform**: Upload audio to `/waveform/` to get PNG visualization
-        3. **Check Formats**: Use `/formats/` to see all supported audio formats
-        4. **Health Check**: Use `/health/` to verify API status
+        3. **Generate Spectrogram**: Upload audio to `/spectrogram/` to get STFT analysis
+        4. **Check Formats**: Use `/formats/` to see all supported audio formats
+        5. **Health Check**: Use `/health/` to verify API status
         
         ## Endpoints Overview
         
@@ -35,6 +37,7 @@ schema_view = get_schema_view(
         
         ### Audio Visualization  
         - `POST /waveform/` - Generate waveform visualizations
+        - `POST /spectrogram/` - Generate STFT spectrogram analysis
         
         ### Information
         - `GET /formats/` - List supported audio formats

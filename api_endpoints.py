@@ -2,6 +2,7 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
 from format_conversion import AudioConverter
 from waveform import WaveformGenerator
+from spectrogram import SpectrogramGenerator
 from swagger_config import *
 
 
@@ -275,3 +276,107 @@ def generate_waveform(request):
         
     except Exception as e:
         return JsonResponse({'error': 'Waveform generation failed'}, status=500)
+
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Generate Audio Spectrogram Visualization",
+    operation_description="""
+    Create a professional STFT spectrogram visualization with log-frequency scale from any supported audio file.
+    
+    **Features:**
+    - High-resolution PNG output (150 DPI)
+    - STFT (Short-Time Fourier Transform) analysis
+    - Log-frequency scale for better frequency resolution
+    - Professional styling with colorbar and labels
+    - Automatic filename generation (original_name_spectrogram.png)
+    
+    **Technical Details:**
+    - FFT Size: 2048 samples
+    - Hop Length: 512 samples
+    - Frequency Range: 20 Hz to Nyquist frequency
+    - Color Scale: Viridis colormap with dB magnitude
+    
+    **Supported Input Formats:**
+    - All formats: MP3, MP4, WAV, FLAC, AAC, OGG, WMA, M4A, AIFF
+    
+    **Output:**
+    - PNG image file ready for download
+    - Dimensions: 14x8 inches at 150 DPI
+    - Includes title, axis labels, colorbar, and grid for professional appearance
+    
+    **Use Cases:**
+    - Audio frequency analysis
+    - Music production and mastering
+    - Sound engineering and acoustics
+    - Educational content for signal processing
+    - Audio quality assessment and debugging
+    """,
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'audio_file': openapi.Schema(
+                type=openapi.TYPE_FILE,
+                description="Audio file to analyze. Accepts all supported formats: mp3, mp4, wav, flac, aac, ogg, wma, m4a, aiff"
+            )
+        },
+        required=['audio_file']
+    ),
+    responses={
+        200: openapi.Response(
+            description="Success - PNG spectrogram image ready for download",
+            headers={
+                'Content-Type': openapi.Schema(type=openapi.TYPE_STRING, example='image/png'),
+                'Content-Disposition': openapi.Schema(type=openapi.TYPE_STRING, example='attachment; filename="audio_spectrogram.png"')
+            }
+        ),
+        400: openapi.Response(
+            description="Bad Request - Missing or invalid audio file",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example="No audio file provided"
+                    )
+                }
+            )
+        ),
+        500: openapi.Response(
+            description="Internal Server Error - Spectrogram generation failed",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        example="Spectrogram generation failed"
+                    )
+                }
+            )
+        )
+    },
+    consumes=['multipart/form-data'],
+    tags=['Audio Visualization']
+)
+@api_view(['POST'])
+def generate_spectrogram(request):
+    try:
+        if 'audio_file' not in request.FILES:
+            return JsonResponse({'error': 'No audio file provided'}, status=400)
+        
+        audio_file = request.FILES['audio_file']
+        
+        if not audio_file.name:
+            return JsonResponse({'error': 'Invalid file'}, status=400)
+        
+        spectrogram_data = SpectrogramGenerator.generate_spectrogram_from_file(audio_file, audio_file.name)
+        
+        filename = audio_file.name.rsplit(".", 1)[0] + "_spectrogram.png"
+        response = HttpResponse(spectrogram_data, content_type='image/png')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = len(spectrogram_data)
+        response['Cache-Control'] = 'no-cache'
+        return response
+        
+    except Exception as e:
+        return JsonResponse({'error': 'Spectrogram generation failed'}, status=500)
